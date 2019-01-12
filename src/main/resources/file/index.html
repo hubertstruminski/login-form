@@ -1,0 +1,77 @@
+<!DOCTYPE HTML>
+<html lang="pl">
+<head>
+	<meta charset="utf-8" />
+	<title>Sign in!</title>
+
+	<style>
+		body
+		{
+			margin: 0;
+			padding: 0;
+			width: 100vw;
+			height: 100vh;
+			background-color: gray;
+			overflow-x: hidden;
+			overflow-y: hidden;
+		}
+		#container
+		{
+			width: 400px;
+			height: 400px;
+			background-color: white;
+			margin-left: auto;
+			margin-right: auto;
+			border-radius: 5px;
+			padding: 5px;
+			margin-top: 15%;
+			text-align: center;
+		}
+		input[type="text"], input[type="password"]
+		{
+			padding: 10px;
+			box-sizing: border-box;
+		}
+		input[type="submit"]
+		{
+			padding: 10px;
+			box-sizing: border-box;
+			width: 260px;
+			font-weight: 800;
+			font-size: 22px;
+			background-color: #4286f4;
+			color: white;
+			border: 1px solid #0e2b59;
+			border-radius: 5px;
+			letter-spacing: 2.5px;
+		}
+		input[type="submit"]:hover
+		{
+			background-color: #1a3e77;
+		}
+		#myForm
+		{
+			box-sizing: border-box;
+		}
+	</style>
+</head>
+
+<body>
+	
+	<div id="container">
+		<div id="myForm">
+			<h1>Sign in</h1>
+			<form method="post">
+				<hr />
+				<br /><br />
+				User Name: <br />
+				<input type="text" name="name" /> <br /> <br />
+				Password: <br />
+				<input type="password" name="password" /> <br /> <br />
+				<input type="submit" name="btnForm" value="Sign in" />
+			</form>
+		</div>
+	</div>
+	
+</body>
+</html>
