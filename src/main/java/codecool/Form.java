@@ -26,22 +26,36 @@ public class Form implements HttpHandler {
         if(method.equals("GET")){
 
             String cookieStr = httpExchange.getRequestHeaders().getFirst("Cookie");
-            HttpCookie cookie;
+//            HttpCookie cookie;
 
-            if (cookieStr != null) {
-                cookie = HttpCookie.parse(cookieStr).get(0);
 
-                JtwigTemplate template = JtwigTemplate.classpathTemplate("templates/logout.twig");
-                JtwigModel model = JtwigModel.newModel();
-
-                model.with("username", cookie.getValue());
-
-                response = template.render(model);
-            }else{
+            if(cookieStr == null){
                 JtwigTemplate template = JtwigTemplate.classpathTemplate("templates/index.twig");
                 JtwigModel model = JtwigModel.newModel();
 
                 response = template.render(model);
+            }else{
+                List<HttpCookie> cookies = HttpCookie.parse(cookieStr);
+                for(HttpCookie cookie: cookies){
+                    if (cookieStr != null && cookie.getName().equals("username") && !cookie.getValue().equals("")) {
+                        cookie = HttpCookie.parse(cookieStr).get(0);
+
+                        JtwigTemplate template = JtwigTemplate.classpathTemplate("templates/logout.twig");
+                        JtwigModel model = JtwigModel.newModel();
+
+                        model.with("username", cookie.getValue());
+
+                        response = template.render(model);
+
+                        httpExchange.getResponseHeaders().add("Location", "/logout");
+                        httpExchange.sendResponseHeaders(303, 0);
+                    }else{
+                        JtwigTemplate template = JtwigTemplate.classpathTemplate("templates/index.twig");
+                        JtwigModel model = JtwigModel.newModel();
+
+                        response = template.render(model);
+                    }
+                }
             }
 
         }
@@ -67,6 +81,9 @@ public class Form implements HttpHandler {
                 model.with("username", cookie.getValue());
 
                 response = template.render(model);
+
+                httpExchange.getResponseHeaders().add("Location", "/logout");
+                httpExchange.sendResponseHeaders(303, 0);
             }else{
                 JtwigTemplate template = JtwigTemplate.classpathTemplate("templates/index.twig");
                 JtwigModel model = JtwigModel.newModel();

@@ -27,7 +27,15 @@ public class Logout implements HttpHandler {
 
         // Send a form if it wasn't submitted yet.
         if(method.equals("GET")){
+            String cookieStr = httpExchange.getRequestHeaders().getFirst("Cookie");
+            HttpCookie cookie = HttpCookie.parse(cookieStr).get(0);;
 
+            JtwigTemplate template = JtwigTemplate.classpathTemplate("templates/logout.twig");
+            JtwigModel model = JtwigModel.newModel();
+
+            model.with("username", cookie.getValue());
+
+            response = template.render(model);
 
         }
 
@@ -39,7 +47,31 @@ public class Logout implements HttpHandler {
 
             for(HttpCookie cookie: cookies){
                 if(cookie.getName().equals("username")){
+                    System.out.println("Username: " + cookie.getValue());
+                    cookie.setValue("");
+                    cookie.setPath("/");
                     cookie.setMaxAge(0);
+                    httpExchange.getResponseHeaders().add("Set-Cookie", cookie.toString());
+
+
+
+//                    JtwigTemplate template = JtwigTemplate.classpathTemplate("templates/index.twig");
+//                    JtwigModel model = JtwigModel.newModel();
+//
+//                    response = template.render(model);
+
+                    httpExchange.getResponseHeaders().add("Location", "/form");
+                    httpExchange.sendResponseHeaders(303, 0);
+                }else{
+//                    JtwigTemplate template = JtwigTemplate.classpathTemplate("templates/index.twig");
+//                    JtwigModel model = JtwigModel.newModel();
+//
+//                    cookie.setMaxAge(0);
+//
+//                    response = template.render(model);
+
+//                    httpExchange.getResponseHeaders().add("Location", "/form");
+//                    httpExchange.sendResponseHeaders(303, 0);
                 }
             }
 
