@@ -1,23 +1,32 @@
 package codecool;
 
+import DAO.Database;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import org.jtwig.JtwigModel;
 import org.jtwig.JtwigTemplate;
 
+import javax.xml.crypto.Data;
 import java.io.*;
 import java.net.HttpCookie;
 import java.util.List;
+import java.util.Optional;
 
 public class Logout implements HttpHandler {
+
+    private Database database;
+    private CookieHelper cookieHelper;
+
+    public Logout(){
+        this.database = new Database();
+        this.cookieHelper = new CookieHelper();
+    }
 
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
         String response = "";
         String method = httpExchange.getRequestMethod();
 
-
-        // Send a form if it wasn't submitted yet.
         if(method.equals("GET")){
             String cookieStr = httpExchange.getRequestHeaders().getFirst("Cookie");
             HttpCookie cookie = HttpCookie.parse(cookieStr).get(0);;
@@ -30,29 +39,52 @@ public class Logout implements HttpHandler {
             response = template.render(model);
         }
 
-//         If the form was submitted, retrieve it's content.
         if(method.equals("POST")){
 
             String header = httpExchange.getRequestHeaders().getFirst("Cookie");
             List<HttpCookie> cookies = HttpCookie.parse(header);
 
-            for(HttpCookie cookie: cookies){
-                if(cookie.getName().equals("username")){
-                    System.out.println("Username: " + cookie.getValue());
-                    cookie.setValue("");
-                    cookie.setPath("/");
-                    cookie.setMaxAge(0);
-                    httpExchange.getResponseHeaders().add("Set-Cookie", cookie.toString());
+            Optional<HttpCookie> getCookieSessionId = getSessionIdCookie(httpExchange);
 
-                    httpExchange.getResponseHeaders().add("Location", "/form");
-                    httpExchange.sendResponseHeaders(303, 0);
+            String username = "";
+            try{
+                for(HttpCookie cookie: cookies){
+                    if(cookie.getName().equals("username")){
+                        username = cookie.getValue();
+
+                        cookie.setValue("");
+                        cookie.setPath("/");
+                        cookie.setMaxAge(0);
+                        httpExchange.getResponseHeaders().add("Set-Cookie", cookie.toString());
+                    }
                 }
+                if(getCookieSessionId.get().getName().equals("sessionId")){
+                    getCookieSessionId.get().setValue("");
+                    getCookieSessionId.get().setPath("/");
+                    getCookieSessionId.get().setMaxAge(0);
+
+                    httpExchange.getResponseHeaders().add("Set-Cookie", getCookieSessionId.get().toString());
+
+                    database.setSessionId(null, username);
+                }
+            }catch(Exception e){
+                System.err.println(e.getClass().getName() + ": " + e.getMessage());
             }
+
+            httpExchange.getResponseHeaders().add("Location", "/form");
+            httpExchange.sendResponseHeaders(303, 0);
         }
 
         httpExchange.sendResponseHeaders(200, 0);// response.getBytes("UTF-32").length);
         OutputStream os = httpExchange.getResponseBody();
         os.write(response.getBytes());
         os.close();
+    }
+
+
+    private Optional<HttpCookie> getSessionIdCookie(HttpExchange httpExchange){
+        String cookieStr = httpExchange.getRequestHeaders().getFirst("Cookie");
+        List<HttpCookie> cookies = cookieHelper.parseCookies(cookieStr);
+        return cookieHelper.findCookieByName("sessionId", cookies);
     }
 }

@@ -1,6 +1,7 @@
 package DAO;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
@@ -106,7 +107,7 @@ public class Database implements IDatabase{
         return false;
     }
 
-    public boolean checkUsernameCookie(String cookieUserName) throws Exception{
+    public boolean checkUsernameCookie(String cookieUserName, String cookieSessionID) throws Exception{
         Statement stmt = null;
         Connection c = null;
         ResultSet rs = null;
@@ -115,11 +116,12 @@ public class Database implements IDatabase{
             c.setAutoCommit(false);
 
             stmt = c.createStatement();
-            rs = stmt.executeQuery( "SELECT username FROM public.\"Users\";");
+            rs = stmt.executeQuery( "SELECT username, session_id FROM public.\"Users\";");
             while (rs.next()) {
                 String  userNameDb = rs.getString("username");
+                String sessionID = rs.getString("session_id");
 
-                if(userNameDb.equals(cookieUserName)){
+                if(userNameDb.equals(cookieUserName) && sessionID.equals(cookieSessionID)){
                     return true;
                 }
             }
@@ -131,5 +133,30 @@ public class Database implements IDatabase{
             c.close();
         }
         return false;
+    }
+
+    public void setSessionId(String sessionID, String userNameFromForm) throws Exception{
+        Connection c = null;
+        PreparedStatement pstmt = null;
+        try {
+            c = connect();
+            c.setAutoCommit(false);
+
+            String sql = "UPDATE public.\"Users\" SET session_id=? WHERE username = ?;";
+
+            pstmt = c.prepareStatement(sql);
+
+            pstmt.setString(1, sessionID);
+            pstmt.setString(2, userNameFromForm);
+
+            pstmt.executeUpdate();
+            c.commit();
+
+        } catch ( Exception e ) {
+            System.err.println(e.getClass().getName()+ ": " + e.getMessage());
+        }finally{
+            pstmt.close();
+            c.close();
+        }
     }
 }

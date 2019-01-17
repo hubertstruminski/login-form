@@ -46,7 +46,10 @@ public class Form implements HttpHandler {
 
             try{
                 for(HttpCookie cookie: cookies){
-                    if (cookieStr != null && cookie.getName().equals("username") && !cookie.getValue().equals("") && database.checkUsernameCookie(cookie.getValue()) && getCookieSessionId.isPresent()) {
+
+                    String sessionId = getCookieSessionId.get().getValue().substring(1, getCookieSessionId.get().getValue().length()-1);
+
+                    if (database.checkUsernameCookie(cookie.getValue(), sessionId)) {
                         cookie = HttpCookie.parse(cookieStr).get(0);
 
                         JtwigTemplate template = JtwigTemplate.classpathTemplate("templates/logout.twig");
@@ -90,9 +93,12 @@ public class Form implements HttpHandler {
                     // end
 
                     // cookie - sessionID
-                    String randomSessionId = generator.setSessionId();
+                    String randomSessionId = generator.generateUniqueSessionID();
                     Optional<HttpCookie> cookieSessionId = Optional.of(new HttpCookie("sessionId", randomSessionId));
+                    cookieSessionId.get().setMaxAge(2*60);
                     httpExchange.getResponseHeaders().add("Set-Cookie", cookieSessionId.get().toString());
+                            //update sessionID in DB
+                    database.setSessionId(randomSessionId, inputs.get("name").toString());
                     // end
 
                     JtwigTemplate template = JtwigTemplate.classpathTemplate("templates/logout.twig");
