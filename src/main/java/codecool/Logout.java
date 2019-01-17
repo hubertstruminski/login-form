@@ -1,7 +1,5 @@
 package codecool;
 
-import DAO.Database;
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import org.jtwig.JtwigModel;
@@ -9,15 +7,9 @@ import org.jtwig.JtwigTemplate;
 
 import java.io.*;
 import java.net.HttpCookie;
-import java.net.URLDecoder;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
 
 public class Logout implements HttpHandler {
-
-    private Database database = new Database();
 
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
@@ -36,7 +28,6 @@ public class Logout implements HttpHandler {
             model.with("username", cookie.getValue());
 
             response = template.render(model);
-
         }
 
 //         If the form was submitted, retrieve it's content.
@@ -53,35 +44,15 @@ public class Logout implements HttpHandler {
                     cookie.setMaxAge(0);
                     httpExchange.getResponseHeaders().add("Set-Cookie", cookie.toString());
 
-
-
-//                    JtwigTemplate template = JtwigTemplate.classpathTemplate("templates/index.twig");
-//                    JtwigModel model = JtwigModel.newModel();
-//
-//                    response = template.render(model);
-
                     httpExchange.getResponseHeaders().add("Location", "/form");
                     httpExchange.sendResponseHeaders(303, 0);
-                }else{
-//                    JtwigTemplate template = JtwigTemplate.classpathTemplate("templates/index.twig");
-//                    JtwigModel model = JtwigModel.newModel();
-//
-//                    cookie.setMaxAge(0);
-//
-//                    response = template.render(model);
-
-//                    httpExchange.getResponseHeaders().add("Location", "/form");
-//                    httpExchange.sendResponseHeaders(303, 0);
                 }
             }
-
         }
 
-
-        httpExchange.sendResponseHeaders(200, response.getBytes("UTF-32").length);
+        httpExchange.sendResponseHeaders(200, 0);// response.getBytes("UTF-32").length);
         OutputStream os = httpExchange.getResponseBody();
         os.write(response.getBytes());
         os.close();
     }
-
 }

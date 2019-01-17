@@ -16,14 +16,10 @@ public class ConnectorDatabase {
                 System.out.println("Database successfully connected.");
             }
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            System.err.println(e.getClass().getName() + ": " + e.getMessage());
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.err.println(e.getClass().getName() + ": " + e.getMessage());
         }
         return connection;
-    }
-
-    public static void main(String[] args) {
-        connect();
     }
 }
