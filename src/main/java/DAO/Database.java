@@ -1,16 +1,13 @@
 package DAO;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.*;
 
 import static DAO.ConnectorDatabase.connect;
 
 public class Database implements IDatabase{
 
     //not used
-    public void dropTable(String tableName) throws Exception{
+    public void dropTable(String tableName) throws SQLException{
         Statement stmt = null;
         Connection c = null;
         try {
@@ -20,7 +17,7 @@ public class Database implements IDatabase{
             String sql = "DROP TABLE IF EXISTS " + tableName;
 
             stmt.executeUpdate(sql);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
         }finally{
             stmt.close();
@@ -29,7 +26,7 @@ public class Database implements IDatabase{
     }
 
     //not used
-    public void createTable() throws Exception{
+    public void createTable() throws SQLException{
         dropTable("Users");
 
         Statement stmt = null;
@@ -50,7 +47,7 @@ public class Database implements IDatabase{
 
             stmt.executeUpdate(seq);
             stmt.executeUpdate(sql);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
         }finally{
             stmt.close();
@@ -59,7 +56,7 @@ public class Database implements IDatabase{
     }
 
     //not used
-    public void insertRecordsWithAccounts() throws Exception{
+    public void insertRecordsWithAccounts() throws SQLException{
         Connection c = null;
         Statement stmt = null;
         try{
@@ -71,7 +68,7 @@ public class Database implements IDatabase{
             stmt.executeUpdate(sql);
 
             c.commit();
-        }catch(Exception e){
+        }catch(SQLException e){
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
         }finally{
             c.close();
@@ -79,7 +76,7 @@ public class Database implements IDatabase{
         }
     }
 
-    public boolean selectAllData(String userNameForm, String passwordForm) throws Exception{
+    public boolean selectAllData(String userNameForm, String passwordForm) throws SQLException{
         Statement stmt = null;
         Connection c = null;
         ResultSet rs = null;
@@ -97,7 +94,7 @@ public class Database implements IDatabase{
                     return true;
                 }
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             System.err.println(e.getClass().getName()+ ": " + e.getMessage());
         }finally{
             rs.close();
@@ -107,7 +104,7 @@ public class Database implements IDatabase{
         return false;
     }
 
-    public boolean checkUsernameCookie(String cookieUserName, String cookieSessionID) throws Exception{
+    public boolean checkUsernameCookie(String cookieUserName, String cookieSessionID) throws SQLException{
         Statement stmt = null;
         Connection c = null;
         ResultSet rs = null;
@@ -125,7 +122,7 @@ public class Database implements IDatabase{
                     return true;
                 }
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
         }finally {
             rs.close();
@@ -135,7 +132,7 @@ public class Database implements IDatabase{
         return false;
     }
 
-    public void setSessionId(String sessionID, String userNameFromForm) throws Exception{
+    public void setSessionId(String sessionID, String userNameFromForm) throws SQLException{
         Connection c = null;
         PreparedStatement pstmt = null;
         try {
@@ -152,7 +149,7 @@ public class Database implements IDatabase{
             pstmt.executeUpdate();
             c.commit();
 
-        } catch ( Exception e ) {
+        } catch (SQLException e ) {
             System.err.println(e.getClass().getName()+ ": " + e.getMessage());
         }finally{
             pstmt.close();

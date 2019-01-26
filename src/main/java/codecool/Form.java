@@ -9,6 +9,7 @@ import org.jtwig.JtwigTemplate;
 import java.io.*;
 import java.net.HttpCookie;
 import java.net.URLDecoder;
+import java.sql.SQLException;
 import java.util.*;
 
 public class Form implements HttpHandler {
@@ -21,6 +22,22 @@ public class Form implements HttpHandler {
         this.database = new Database();
         this.cookieHelper = new CookieHelper();
         this.generator = new Generator();
+    }
+
+    public String renderTemplate(String templateName, HttpCookie cookie, String cookieName){
+        JtwigTemplate template = JtwigTemplate.classpathTemplate("templates/" + templateName);
+        JtwigModel model = JtwigModel.newModel();
+
+        if(cookie != null && cookieName != null){
+            model.with(cookieName, cookie.getValue());
+        }
+
+        return template.render(model);
+    }
+
+    public void redirect(HttpExchange httpExchange, String pageName) throws IOException {
+        httpExchange.getResponseHeaders().add("Location", pageName);
+        httpExchange.sendResponseHeaders(303, 0);
     }
 
     @Override
@@ -38,10 +55,7 @@ public class Form implements HttpHandler {
             if(cookieStr != null){
                 cookies = HttpCookie.parse(cookieStr);
             }else{
-                JtwigTemplate template = JtwigTemplate.classpathTemplate("templates/index.twig");
-                JtwigModel model = JtwigModel.newModel();
-
-                response = template.render(model);
+                response = renderTemplate("index.twig", null, null);
             }
 
             try{
@@ -59,14 +73,11 @@ public class Form implements HttpHandler {
 
                         response = template.render(model);
 
-                        httpExchange.getResponseHeaders().add("Location", "/logout");
-                        httpExchange.sendResponseHeaders(303, 0);
+                        redirect(httpExchange, "/logout");
 
                     }else if(cookie.getName().equals("username") && cookie.getValue().equals("")){
-                        JtwigTemplate template = JtwigTemplate.classpathTemplate("templates/index.twig");
-                        JtwigModel model = JtwigModel.newModel();
 
-                        response = template.render(model);
+                        response = renderTemplate("index.twig", null, null);
                     }
                 }
             }catch(Exception e){
@@ -111,12 +122,10 @@ public class Form implements HttpHandler {
                     httpExchange.getResponseHeaders().add("Location", "/logout");
                     httpExchange.sendResponseHeaders(303, 0);
                 }else{
-                    JtwigTemplate template = JtwigTemplate.classpathTemplate("templates/index.twig");
-                    JtwigModel model = JtwigModel.newModel();
 
-                    response = template.render(model);
+                    response = renderTemplate("index.twig", null, null);
                 }
-            }catch(Exception e){
+            }catch(SQLException e){
                 System.err.println(e.getClass().getName()+ ": " + e.getMessage());
             }
         }

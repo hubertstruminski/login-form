@@ -9,6 +9,7 @@ import org.jtwig.JtwigTemplate;
 import javax.xml.crypto.Data;
 import java.io.*;
 import java.net.HttpCookie;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,7 +24,7 @@ public class Logout implements HttpHandler {
     }
 
     @Override
-    public void handle(HttpExchange httpExchange) throws IOException {
+    public void handle(HttpExchange httpExchange) throws IOException{
         String response = "";
         String method = httpExchange.getRequestMethod();
 
@@ -67,7 +68,7 @@ public class Logout implements HttpHandler {
 
                     database.setSessionId(null, username);
                 }
-            }catch(Exception e){
+            }catch(SQLException e){
                 System.err.println(e.getClass().getName() + ": " + e.getMessage());
             }
 
