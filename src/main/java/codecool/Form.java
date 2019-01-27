@@ -18,13 +18,13 @@ public class Form implements HttpHandler {
     private CookieHelper cookieHelper;
     private Generator generator;
 
-    public Form(){
+    Form(){
         this.database = new Database();
         this.cookieHelper = new CookieHelper();
         this.generator = new Generator();
     }
 
-    public String renderTemplate(String templateName, HttpCookie cookie, String cookieName){
+    private String renderTemplate(String templateName, HttpCookie cookie, String cookieName){
         JtwigTemplate template = JtwigTemplate.classpathTemplate("templates/" + templateName);
         JtwigModel model = JtwigModel.newModel();
 
@@ -35,9 +35,38 @@ public class Form implements HttpHandler {
         return template.render(model);
     }
 
-    public void redirect(HttpExchange httpExchange, String pageName) throws IOException {
-        httpExchange.getResponseHeaders().add("Location", pageName);
+    private void redirect(HttpExchange httpExchange) throws IOException {
+        httpExchange.getResponseHeaders().add("Location", "/logout");
         httpExchange.sendResponseHeaders(303, 0);
+    }
+
+    private boolean isLoggedOut(HttpCookie cookie){
+        return cookie.getName().equals("username") && cookie.getValue().equals("");
+    }
+
+    private boolean isLoggedIn(HttpCookie cookie, String sessionId) throws SQLException {
+        return database.checkUsernameCookie(cookie.getValue(), sessionId);
+    }
+
+    private boolean checkIfUserExists(String name, String password) throws SQLException {
+        return database.selectAllData(name, password);
+    }
+
+    private HttpCookie setUserNameCookie(String name, HttpExchange httpExchange){
+        HttpCookie cookie = new HttpCookie("username", name);
+        cookie.setMaxAge(2*60);
+        httpExchange.getResponseHeaders().add("Set-Cookie", cookie.toString());
+
+        return cookie;
+    }
+
+    private void setSessionId(HttpExchange httpExchange, String name) throws SQLException {
+        String randomSessionId = generator.generateUniqueSessionID();
+        Optional<HttpCookie> cookieSessionId = Optional.of(new HttpCookie("sessionId", randomSessionId));
+        cookieSessionId.get().setMaxAge(2*60);
+        httpExchange.getResponseHeaders().add("Set-Cookie", cookieSessionId.get().toString());
+
+        database.setSessionId(randomSessionId, name);
     }
 
     @Override
@@ -63,20 +92,13 @@ public class Form implements HttpHandler {
 
                     String sessionId = getCookieSessionId.get().getValue().substring(1, getCookieSessionId.get().getValue().length()-1);
 
-                    if (database.checkUsernameCookie(cookie.getValue(), sessionId)) {
+                    if (isLoggedIn(cookie, sessionId)) {
                         cookie = HttpCookie.parse(cookieStr).get(0);
 
-                        JtwigTemplate template = JtwigTemplate.classpathTemplate("templates/logout.twig");
-                        JtwigModel model = JtwigModel.newModel();
+                        response = renderTemplate("logout.twig", cookie, "username");
+                        redirect(httpExchange);
 
-                        model.with("username", cookie.getValue());
-
-                        response = template.render(model);
-
-                        redirect(httpExchange, "/logout");
-
-                    }else if(cookie.getName().equals("username") && cookie.getValue().equals("")){
-
+                    }else if(isLoggedOut(cookie)){
                         response = renderTemplate("index.twig", null, null);
                     }
                 }
@@ -96,31 +118,13 @@ public class Form implements HttpHandler {
             Map inputs = parseFormData(formData);
 
             try{
-                if(database.selectAllData(inputs.get("name").toString(), inputs.get("password").toString())){
-                    // cookie - username
-                    HttpCookie cookie = new HttpCookie("username", inputs.get("name").toString());
-                    cookie.setMaxAge(2*60);
-                    httpExchange.getResponseHeaders().add("Set-Cookie", cookie.toString());
-                    // end
+                if(checkIfUserExists(inputs.get("name").toString(), inputs.get("password").toString())){
 
-                    // cookie - sessionID
-                    String randomSessionId = generator.generateUniqueSessionID();
-                    Optional<HttpCookie> cookieSessionId = Optional.of(new HttpCookie("sessionId", randomSessionId));
-                    cookieSessionId.get().setMaxAge(2*60);
-                    httpExchange.getResponseHeaders().add("Set-Cookie", cookieSessionId.get().toString());
-                            //update sessionID in DB
-                    database.setSessionId(randomSessionId, inputs.get("name").toString());
-                    // end
+                    HttpCookie cookie = setUserNameCookie(inputs.get("name").toString(), httpExchange);
+                    setSessionId(httpExchange, inputs.get("name").toString());
 
-                    JtwigTemplate template = JtwigTemplate.classpathTemplate("templates/logout.twig");
-                    JtwigModel model = JtwigModel.newModel();
-
-                    model.with("username", cookie.getValue());
-
-                    response = template.render(model);
-
-                    httpExchange.getResponseHeaders().add("Location", "/logout");
-                    httpExchange.sendResponseHeaders(303, 0);
+                    response = renderTemplate("logout.twig", cookie, "username");
+                    redirect(httpExchange);
                 }else{
 
                     response = renderTemplate("index.twig", null, null);
